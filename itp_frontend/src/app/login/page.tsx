@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Lock, User, ArrowRight, Loader2 } from 'lucide-react';
 import Cookies from 'js-cookie';
 
-export default function LoginPage() {
+// 1. Criamos um componente interno para o formulário
+function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -14,7 +15,7 @@ export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
-  // Captura para onde o usuário queria ir antes de ser barrado pelo middleware
+  // Captura para onde o usuário queria ir
   const callbackUrl = searchParams.get('callbackUrl') || '/academico';
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -23,7 +24,6 @@ export default function LoginPage() {
     setError('');
 
     try {
-      // 1. Chamada para o seu NestJS (usando a variável de ambiente configurada na Vercel)
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -36,15 +36,13 @@ export default function LoginPage() {
         throw new Error(data.message || 'Falha na autenticação');
       }
 
-      // 2. SALVAR TOKEN NOS COOKIES (Essencial para o Middleware)
       Cookies.set('@ITP:token', data.token, { 
-        expires: 7, // 7 dias de login
+        expires: 7, 
         path: '/',
         sameSite: 'strict',
-        secure: true // Sempre true pois o Vercel provê HTTPS
+        secure: true 
       });
 
-      // 3. Redirecionar para a rota protegida
       router.push(callbackUrl);
       
     } catch (err: any) {
@@ -119,5 +117,18 @@ export default function LoginPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+// 2. Exportamos o componente principal envolvido em Suspense
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-purple-900 text-white font-black italic">
+        INICIALIZANDO ERP...
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
   );
 }
