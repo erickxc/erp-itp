@@ -54,3 +54,13 @@ pids
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# Next.js (Adicione estas linhas)
+.next/
+itp_frontend/.next/
+out/
+itp_frontend/out/
+
+# Produção
+build/
+itp_frontend/build/

@@ -12,29 +12,25 @@
     "baseUrl": "./",
     "incremental": true,
     "skipLibCheck": true,
-    "strictNullChecks": false,
+    "strict": true,
+    /* MUDANÇA CRÍTICA: Desativa a obrigatoriedade de inicializar propriedades no constructor.
+       Isso resolve os erros nas Entities do TypeORM (Aluno, Usuario, etc).
+    */
+    "strictPropertyInitialization": false, 
     "noImplicitAny": false,
-    "strictBindCallApply": false,
-    "forceConsistentCasingInFileNames": false,
-    "noFallthroughCasesInSwitch": false,
     "esModuleInterop": true,
-    "jsx": "preserve",
-    "lib": ["dom", "dom.iterable", "esnext"],
-    "allowJs": true,
-    "resolveJsonModule": true,
     "moduleResolution": "node",
-    "noEmit": false  // <-- MUDANÇA CRÍTICA: Precisa ser false para gerar a pasta dist
+    "noEmit": false,
+    "forceConsistentCasingInFileNames": true
   },
   "include": [
-    "src/**/*.ts", 
-    "itp_frontend/src/**/*.ts", 
-    "itp_frontend/src/**/*.tsx",
-    "next-env.d.ts"
-, "itp_frontend/src/app/financeiro/page.jsx"  ],
+    "src/**/*.ts"
+  ],
   "exclude": [
     "node_modules",
     "dist",
-    "itp_frontend/.next",
-    "app" // Ignora a pasta app que você criou na raiz para não dar conflito
+    "itp_frontend",
+    "test",
+    "**/*.spec.ts"
   ]
 }

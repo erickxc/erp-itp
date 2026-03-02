@@ -20,7 +20,6 @@ export class MatriculasService {
 
   /**
    * FASE 1 -> 2: DISPARO MANUAL DO TERMO LGPD
-   * Chamado quando o funcionário clica em "Enviar Termo".
    */
   async marcarComoAguardandoLGPD(id: number): Promise<Inscricao> {
     const inscricao = await this.inscricaoRepository.findOneBy({ id });
@@ -30,13 +29,12 @@ export class MatriculasService {
 
     inscricao.status_matricula = StatusMatricula.AGUARDANDO_LGPD;
     
-    const salva = await this.inscricaoRepository.save(inscricao);
-    return salva as Inscricao;
+    // O TypeORM retorna o objeto salvo. Usamos unknown para evitar conflito de inferência.
+    return (await this.inscricaoRepository.save(inscricao)) as unknown as Inscricao;
   }
 
   /**
-   * FASE 2 -> 3: CONFIRMAÇÃO DE ASSINATURA (Automática via Webhook do Google)
-   * Move para "Em Validação", liberando as checkboxes de cursos e anexos na UI.
+   * FASE 2 -> 3: CONFIRMAÇÃO DE ASSINATURA
    */
   async confirmarAssinaturaLGPD(id: number): Promise<Inscricao> {
     const inscricao = await this.inscricaoRepository.findOneBy({ id });
@@ -48,8 +46,7 @@ export class MatriculasService {
     inscricao.lgpd_aceito = true;
     inscricao.data_assinatura_lgpd = new Date();
 
-    const salva = await this.inscricaoRepository.save(inscricao);
-    return salva as Inscricao;
+    return (await this.inscricaoRepository.save(inscricao)) as unknown as Inscricao;
   }
 
   /**
@@ -65,6 +62,7 @@ export class MatriculasService {
 
   async receberInscricao(dados: any): Promise<Inscricao> {
     this.logger.log(`📥 Recebendo inscrição via Form: CPF ${dados.cpf}`);
+    
     if (dados.id) delete dados.id;
 
     const existente = await this.inscricaoRepository.findOneBy({ cpf: dados.cpf });
@@ -75,14 +73,15 @@ export class MatriculasService {
       status_matricula: StatusMatricula.PENDENTE
     });
 
-    // CORREÇÃO AQUI: Forçamos o tipo para evitar que o TS ache que é um Array
-    const salva = await this.inscricaoRepository.save(novaInscricao) as unknown as Inscricao;
+    // ✅ SOLUÇÃO DO ERRO TS2352: Double casting (as unknown as Inscricao)
+    // Isso diz ao TS: "Eu sei o que estou fazendo, trate o retorno como Inscricao"
+    const salva = (await this.inscricaoRepository.save(novaInscricao)) as unknown as Inscricao;
     
     this.logger.log(`✅ Inscrição criada ID ${salva.id}`);
     return salva;
   }
   
-  async atualizarStatus(id: number, novoStatus: StatusMatricula, motivo?: string): Promise<Inscricao | any> {
+  async atualizarStatus(id: number, novoStatus: StatusMatricula, motivo?: string): Promise<Inscricao | Aluno> {
     const inscricao = await this.inscricaoRepository.findOneBy({ id });
     if (!inscricao) throw new NotFoundException(`Inscrição ID ${id} não encontrada.`);
 
@@ -95,15 +94,13 @@ export class MatriculasService {
     inscricao.status_matricula = novoStatus;
     if (motivo) inscricao.motivo_status = motivo;
     
-    const salva = await this.inscricaoRepository.save(inscricao);
-    return salva as Inscricao;
+    return (await this.inscricaoRepository.save(inscricao)) as unknown as Inscricao;
   }
 
   /**
    * FASE 3 -> 4: EFETIVAÇÃO DE MATRÍCULA
-   * Cria o aluno e salva os cursos selecionados nas checkboxes.
    */
-  async finalizarMatricula(inscricaoId: number, cursosSelecionados?: string[]) {
+  async finalizarMatricula(inscricaoId: number, cursosSelecionados?: string[]): Promise<Aluno> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -116,27 +113,31 @@ export class MatriculasService {
         inscricao.cursos_desejados = cursosSelecionados.join(', ');
       }
 
+      const matriculaGerada = `ITP-${new Date().getFullYear()}-${inscricao.cpf?.replace(/\D/g, '').substring(0, 4) || '0000'}`;
+
       const novoAluno = queryRunner.manager.create(Aluno, {
         nome: inscricao.nome_completo,
         email: inscricao.email,
         cpf: inscricao.cpf,
         data_nascimento: inscricao.data_nascimento,
-        matricula: `ITP-${new Date().getFullYear()}-${inscricao.cpf?.replace(/\D/g, '').substring(0, 4)}`,
+        matricula: matriculaGerada,
         ativo: true
       });
 
       const alunoSalvo = await queryRunner.manager.save(novoAluno);
-      inscricao.status_matricula = StatusMatricula.MATRICULADO;
       
+      inscricao.status_matricula = StatusMatricula.MATRICULADO;
       await queryRunner.manager.save(Inscricao, inscricao);
+
       await queryRunner.commitTransaction();
       
       this.logger.log(`🎉 Aluno ${alunoSalvo.nome} matriculado com sucesso!`);
       return alunoSalvo;
-    } catch (err) {
+    } catch (err: any) { 
       await queryRunner.rollbackTransaction();
-      this.logger.error(`💥 Erro na efetivação: ${err.message}`);
-      throw new BadRequestException(`Erro: ${err.message}`);
+      const errorMsg = err?.message || 'Erro desconhecido na efetivação';
+      this.logger.error(`💥 Erro na efetivação: ${errorMsg}`);
+      throw new BadRequestException(`Erro: ${errorMsg}`);
     } finally {
       await queryRunner.release();
     }

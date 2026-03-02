@@ -30,11 +30,10 @@
   },
   "include": [
     "next-env.d.ts",
-    "src/**/*.ts", // Garante foco na pasta src
-    "src/**/*.tsx", // Garante foco na pasta src
+    "src/**/*.ts",
+    "src/**/*.tsx",
     ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts",
-    "src/app/financeiro/page.jsx"
+    ".next/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"

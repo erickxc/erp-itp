@@ -1,8 +1,8 @@
 import axios from 'axios';
 
 const api = axios.create({
-  // Ajustado para 127.0.0.1 para evitar problemas de resolução de DNS do Windows
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:3000',
+  // Mude para 3001
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001', 
   headers: {
     'Content-Type': 'application/json',
   },

@@ -6,38 +6,30 @@ export function middleware(request: NextRequest) {
   const hostname = request.headers.get('host');
   const token = request.cookies.get('@ITP:token')?.value;
 
-  // --- LOGICA DE DOMÍNIO (SAAS) ---
-  // Se o usuário acessar o subdomínio itp. e estiver na raiz, 
-  // mandamos direto para o dashboard/grade (ou login se não houver token)
+  // 1. Lógica de Domínio: Se logado na raiz, vai para o Dashboard
   if (hostname === 'itp.institutotiapretinha.org' && pathname === '/') {
-    const target = token ? '/academico' : '/login';
+    const target = token ? '/dashboard' : '/login';
     return NextResponse.redirect(new URL(target, request.url));
   }
 
-  // --- LOGICA DE AUTENTICAÇÃO ---
-  // Adicionei todas as rotas operacionais do sistema ao controle
+  // 2. Rotas Privadas
   const privateRoutes = ['/matriculas', '/dashboard', '/academico', '/estoque', '/financeiro', '/doacoes'];
   const isPrivateRoute = privateRoutes.some(route => pathname.startsWith(route));
 
   if (isPrivateRoute && !token) {
-    // Importante: salva a URL que ele tentou acessar para redirecionar após o login
     const loginUrl = new URL('/login', request.url);
     loginUrl.searchParams.set('callbackUrl', pathname);
     return NextResponse.redirect(loginUrl);
+  }
+
+  // 3. Se logado e tentar ir para o login, manda para o dashboard
+  if (pathname === '/login' && token) {
+    return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
   return NextResponse.next();
 }
 
 export const config = {
-  // O matcher agora deve cobrir todas as rotas que queremos proteger
-  matcher: [
-    '/',
-    '/matriculas/:path*', 
-    '/dashboard/:path*', 
-    '/academico/:path*', 
-    '/estoque/:path*', 
-    '/financeiro/:path*', 
-    '/doacoes/:path*'
-  ],
+  matcher: ['/', '/matriculas/:path*', '/dashboard/:path*', '/academico/:path*', '/estoque/:path*', '/financeiro/:path*', '/doacoes/:path*'],
 };
