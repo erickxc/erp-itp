@@ -8,7 +8,7 @@ import Cookies from 'js-cookie';
 function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false); // Estado para o olho
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   
@@ -21,7 +21,10 @@ function LoginForm() {
     setError('');
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      // MODO ARQUITETURA: Detecta se está em produção para usar o domínio da API
+      const isProd = process.env.NODE_ENV === 'production';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 
+                     (isProd ? 'https://api.itp.institutotiapretinha.org' : 'http://localhost:3001');
       
       const response = await fetch(`${apiUrl}/auth/login`, {
         method: 'POST',
@@ -32,29 +35,39 @@ function LoginForm() {
         }),
       });
 
-      // Tratamento para evitar o erro "Unexpected end of JSON input"
-      const text = await response.text();
-      const data = text ? JSON.parse(text) : {};
+      // MODO DEBUG: Lê como texto primeiro para evitar erro de JSON inesperado
+      const responseText = await response.text();
+      let data;
+      
+      try {
+        data = responseText ? JSON.parse(responseText) : {};
+      } catch (parseError) {
+        console.error("Falha ao processar JSON:", responseText);
+        throw new Error("O servidor retornou uma resposta inválida. Verifique o CORS ou o status da API.");
+      }
 
       if (!response.ok) {
         throw new Error(data.message || 'Credenciais inválidas. Verifique seus dados.');
       }
 
       if (data.access_token) {
+        // Grava o cookie (secure apenas em HTTPS para não quebrar o localhost)
         Cookies.set('@ITP:token', data.access_token, { 
           expires: 7, 
           path: '/',
           sameSite: 'lax',
-          secure: process.env.NODE_ENV === 'production' 
+          secure: typeof window !== 'undefined' && window.location.protocol === 'https:'
         });
 
         localStorage.setItem('@ITP:token', data.access_token);
+        
+        // Redirecionamento forçado para garantir limpeza de cache do middleware
         window.location.href = callbackUrl;
       }
       
     } catch (err: any) {
-      console.error("Erro detalhado:", err);
-      setError(err.message || 'Não foi possível conectar ao servidor.');
+      console.error("Erro detalhado no login:", err);
+      setError(err.message || 'Não foi possível conectar ao servidor backend.');
     } finally {
       setIsLoading(false);
     }
@@ -103,7 +116,7 @@ function LoginForm() {
                 />
               </div>
 
-              {/* Campo Senha com Botão de Mostrar */}
+              {/* Campo Senha com Toggle de Visibilidade */}
               <div className="group relative">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-purple-600 transition-colors" size={20} />
                 <input 
@@ -116,8 +129,7 @@ function LoginForm() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-purple-600 transition-colors"
-                  title={showPassword ? "Esconder senha" : "Mostrar senha"}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-purple-600 transition-all p-1"
                 >
                   {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
