@@ -1,4 +1,12 @@
-import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
+import { 
+  Controller, 
+  Post, 
+  Body, 
+  HttpCode, 
+  HttpStatus, 
+  UnauthorizedException, 
+  BadRequestException 
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 
 @Controller('auth')
@@ -6,18 +14,33 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('registro')
+  @HttpCode(HttpStatus.CREATED) // 201 para criação
   async registrar(@Body() dados: any) {
-    // Recomendo que 'dados' contenha: nome, email, senha, role
+    if (!dados.email || !dados.senha) {
+      throw new BadRequestException('Email e senha são obrigatórios para o registro.');
+    }
     return await this.authService.registrar(dados);
   }
 
   @Post('login')
-  @HttpCode(HttpStatus.OK) // Login bem-sucedido deve retornar 200, não 201
+  @HttpCode(HttpStatus.OK) // 200 para login (correto conforme você observou)
   async login(@Body() body: any) {
-    // Ajustado para aceitar 'senha' ou 'password', dando preferência ao que seu banco usa
-    const email = body.email;
-    const senha = body.senha || body.password; 
-    
-    return await this.authService.login(email, senha);
+    const { email, senha, password } = body;
+    const pass = senha || password;
+
+    if (!email || !pass) {
+      throw new BadRequestException('Email e senha/password são obrigatórios.');
+    }
+
+    try {
+      const result = await this.authService.login(email, pass);
+      if (!result) {
+        throw new UnauthorizedException('Credenciais inválidas.');
+      }
+      return result;
+    } catch (error) {
+      // Se o erro vier do serviço, repassa ou trata aqui
+      throw error;
+    }
   }
 }

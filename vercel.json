@@ -12,15 +12,23 @@
   ],
   "rewrites": [
     {
-      "source": "/auth/:path*",
+      "source": "/auth/(.*)",
       "destination": "src/main.ts"
     },
     {
-      "source": "/users/:path*",
+      "source": "/users/(.*)",
       "destination": "src/main.ts"
     },
     {
-      "source": "/(.*)",
+      "source": "/matriculas/(.*)",
+      "destination": "src/main.ts"
+    },
+    {
+      "source": "/materias/(.*)",
+      "destination": "src/main.ts"
+    },
+    {
+      "source": "/((?!auth|users|matriculas|materias).*)",
       "destination": "itp_frontend/$1"
     }
   ]

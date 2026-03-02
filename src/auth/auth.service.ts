@@ -16,22 +16,23 @@ export class AuthService {
   ) {}
 
   async registrar(dados: any) {
-    const { email, password, nome, role } = dados;
+    const { email, password, senha, nome, role } = dados;
+    const pass = password || senha; // Suporte para os dois nomes de campo
 
-    // 1. Normalização rigorosa
+    if (!email || !pass) {
+      throw new ConflictException('Dados insuficientes para registro.');
+    }
+
     const emailNormalizado = email.toLowerCase().trim();
 
-    // 2. Verificação de existência
     const usuarioExistente = await this.usuarioRepository.findOneBy({ email: emailNormalizado });
     if (usuarioExistente) {
       throw new ConflictException('Este e-mail já está cadastrado.');
     }
 
-    // 3. Hash da senha
     const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
+    const hashedPassword = await bcrypt.hash(pass, salt);
 
-    // 4. Criação da instância
     const novoUsuario = this.usuarioRepository.create({
       nome,
       email: emailNormalizado,
@@ -39,20 +40,22 @@ export class AuthService {
       role: role || 'assistente',
     });
 
-    // 5. Salvamento
     const salvo = await this.usuarioRepository.save(novoUsuario);
 
-    // 6. Retorno seguro (Removendo password sem erro de TS)
-    const usuarioExibicao = { ...salvo };
-    delete (usuarioExibicao as any).password;
+    // Retorno seguro (Removendo password de forma idiomática)
+    const { password: _, ...usuarioExibicao } = salvo;
     
     return usuarioExibicao;
   }
   
   async login(email: string, pass: string) {
-    this.logger.log(`Tentativa de login para: ${email}`);
+    if (!email || !pass) {
+      throw new UnauthorizedException('Credenciais incompletas.');
+    }
 
-    // Uso do QueryBuilder é essencial aqui por causa do { select: false } na Entity
+    this.logger.log(`Tentativa de login: ${email.toLowerCase().trim()}`);
+
+    // QueryBuilder para contornar o { select: false } da Entity
     const usuario = await this.usuarioRepository.createQueryBuilder('user')
       .addSelect('user.password')
       .where('LOWER(user.email) = LOWER(:email)', { email: email.trim() })
@@ -63,11 +66,10 @@ export class AuthService {
       throw new UnauthorizedException('Credenciais inválidas.');
     }
 
-    // O bcrypt.compare precisa receber o texto puro e depois o hash
     const isPasswordMatching = await bcrypt.compare(pass, usuario.password);
 
     if (!isPasswordMatching) {
-      this.logger.warn(`Senha incorreta para o usuário: ${email}`);
+      this.logger.warn(`Senha incorreta: ${email}`);
       throw new UnauthorizedException('Credenciais inválidas.');
     }
 
@@ -76,8 +78,6 @@ export class AuthService {
       email: usuario.email, 
       role: usuario.role 
     };
-
-    this.logger.log(`Login bem-sucedido: ${email}`);
 
     return {
       access_token: await this.jwtService.signAsync(payload),

@@ -6,6 +6,7 @@ import express from 'express';
 
 const server = express();
 
+// Função para inicializar o NestJS dentro do Express
 export const createServer = async (expressInstance: any) => {
   const app = await NestFactory.create(
     AppModule,
@@ -25,9 +26,11 @@ export const createServer = async (expressInstance: any) => {
 
   app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
 
+  // Importante: Aguarda a inicialização dos módulos e controllers
   await app.init();
 };
 
+// Lógica de execução
 if (process.env.NODE_ENV !== 'production') {
   async function bootstrap() {
     const app = await NestFactory.create(AppModule);
@@ -37,7 +40,10 @@ if (process.env.NODE_ENV !== 'production') {
   }
   bootstrap();
 } else {
+  // Em produção (Vercel), inicializamos a ponte Express-Nest
+  // A Vercel chamará o 'server' exportado abaixo
   createServer(server);
 }
 
+// Exportação obrigatória para o @vercel/node funcionar
 export default server;
