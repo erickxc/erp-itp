@@ -7,7 +7,11 @@
     },
     {
       "src": "itp_frontend/package.json",
-      "use": "@vercel/next"
+      "use": "@vercel/next",
+      "config": {
+        "installCommand": "npm install",
+        "buildCommand": "npm run build"
+      }
     }
   ],
   "rewrites": [
