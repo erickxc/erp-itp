@@ -1,4 +1,4 @@
-import { Role } from '../../../src/auth/constants/roles.enum'; // Importe o Enum idêntico ao Backend
+import { Role } from '@/types/role.enum'; // Importe o Enum local do Frontend
 
 export function usePermissions(userRole?: string) {
   // Traduz a string do cargo para o valor numérico da hierarquia

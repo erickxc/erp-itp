@@ -7,7 +7,7 @@ import {
   Search, Download, UserCheck, ChevronDown, Filter,
   Users, Clock, ShieldAlert, CheckCircle2, FilterX 
 } from 'lucide-react';
-import DossieCandidato from '../../components/DossieCandidato';
+import DossieCandidato from '@/components/DossieCandidato';
 
 export default function GestaoMatriculas() {
   const [matriculas, setMatriculas] = useState<any[]>([]);
