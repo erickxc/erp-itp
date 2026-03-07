@@ -1,32 +1,7 @@
 {
-  "compilerOptions": {
-    "module": "commonjs",
-    "target": "ES2021",
-    "lib": ["es2021"],
-    "declaration": true,
-    "removeComments": true,
-    "emitDecoratorMetadata": true,
-    "experimentalDecorators": true,
-    "allowSyntheticDefaultImports": true,
-    "sourceMap": true,
-
-    "outDir": "./dist",
-    "rootDir": "./api",
-    "baseUrl": "./",
-
-    "incremental": true,
-    "skipLibCheck": true,
-    "strict": true,
-    "strictPropertyInitialization": false,
-    "esModuleInterop": true,
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "forceConsistentCasingInFileNames": true,
-
-    "paths": {
-      "@/*": ["api/*"]
-    }
-  },
-  "include": ["api/**/*.ts"],
-  "exclude": ["node_modules", "dist", "test", "**/*.spec.ts"]
+  "files": [],
+  "references": [
+    { "path": "apps/backend" },
+    { "path": "apps/frontend" }
+  ]
 }

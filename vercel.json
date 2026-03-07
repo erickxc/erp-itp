@@ -1,8 +1,4 @@
 {
-  "version": 2,
-  "installCommand": "npm install",
-  "outputDirectory": "itp_frontend/.next",
-  "ignoreCommand": "git diff --quiet HEAD^ HEAD -- itp_frontend/",
-  "regions": ["iad1"]
+  "version": 2
 }
 
