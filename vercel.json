@@ -1,15 +1,6 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "itp_frontend/package.json",
-      "use": "@vercel/next"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/itp_frontend/$1"
-    }
-  ]
+  "installCommand": "cd itp_frontend && npm install",
+  "buildCommand": "cd itp_frontend && npm run build",
+  "outputDirectory": "itp_frontend/.next",
+  "framework": "nextjs"
 }

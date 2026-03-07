@@ -27,8 +27,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // 1. Captura o cookie definido no backend
-    const token = Cookies.get('@ITP:token'); 
+    // 1. Captura o cookie definido no backend (nome sincronizado com auth.controller.ts)
+    const token = Cookies.get('itp_token');
 
     if (token) {
       try {
@@ -37,7 +37,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(decoded);
       } catch (error) {
         console.error("Sessão inválida:", error);
-        Cookies.remove('@ITP:token');
+        Cookies.remove('itp_token');
       }
     }
     setLoading(false);
