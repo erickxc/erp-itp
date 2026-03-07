@@ -1,6 +1,6 @@
 {
-  "installCommand": "cd itp_frontend && npm install",
-  "buildCommand": "cd itp_frontend && npm run build",
+  "installCommand": "npm install",
+  "buildCommand": "npm run build --workspace=itp_frontend",
   "outputDirectory": "itp_frontend/.next",
   "framework": "nextjs"
 }

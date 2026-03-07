@@ -3,7 +3,7 @@ import Cookies from 'js-cookie';
 
 const api = axios.create({
   // ✅ Aponta para o backend NestJS (Porta 3001) em dev, ou /api em prod (Vercel)
-  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001/api',
+  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.itp.institutotiapretinha.org/api',
   withCredentials: true, // Essencial para cross-origin cookies
   headers: { 'Content-Type': 'application/json' },
 });
